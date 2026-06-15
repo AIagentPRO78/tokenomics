@@ -1,0 +1,20 @@
+{
+  "name": "tokenomics",
+  "description": "Token economics for Claude Code — see, attribute, and prove the cost and context of every session.",
+  "owner": {
+    "name": "AIagentPRO78"
+  },
+  "plugins": [
+    {
+      "name": "tokenomics",
+      "description": "See, attribute, and prove the cost and context of every Claude Code session.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "AIagentPRO78"
+      },
+      "license": "MIT",
+      "keywords": ["cost", "tokens", "context-window", "evals", "observability"]
+    }
+  ]
+}

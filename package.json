@@ -1,0 +1,35 @@
+{
+  "name": "tokenomics",
+  "version": "0.1.0",
+  "description": "See, attribute, and prove the cost and context of every Claude Code session.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "author": "AIagentPRO78",
+  "homepage": "https://github.com/AIagentPRO78/tokenomics",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AIagentPRO78/tokenomics.git"
+  },
+  "bin": {
+    "tokenomics": "bin/tokenomics.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.mjs\"",
+    "selfcheck": "node bin/tokenomics.mjs --version"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": [
+    "claude-code",
+    "tokens",
+    "cost",
+    "context-window",
+    "evals",
+    "observability"
+  ]
+}

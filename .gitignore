@@ -1,0 +1,18 @@
+# dependencies (there are none at runtime; this guards accidental installs)
+node_modules/
+
+# test coverage output
+coverage/
+*.lcov
+.nyc_output/
+
+# os / editor cruft
+.DS_Store
+*.swp
+*~
+
+# logs and local scratch
+*.log
+.tokenomics-state/
+tmp/
+scratch/

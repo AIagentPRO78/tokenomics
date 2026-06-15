@@ -1,0 +1,24 @@
+{
+  "name": "tokenomics",
+  "version": "0.1.0",
+  "description": "See, attribute, and prove the cost and context of every Claude Code session. Exact offline cost accounting from the transcript, per-subagent/skill/tool attribution, a context-degradation HUD, a routing/compaction advisor, and a built-in eval that proves the token/$ delta of each recommendation. Future-proof model registry — new models price and route with zero code change.",
+  "author": {
+    "name": "AIagentPRO78"
+  },
+  "homepage": "https://github.com/AIagentPRO78/tokenomics",
+  "repository": "https://github.com/AIagentPRO78/tokenomics",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "tokens",
+    "cost",
+    "context-window",
+    "context-engineering",
+    "attention-budget",
+    "observability",
+    "evals",
+    "model-routing",
+    "statusline",
+    "finops"
+  ]
+}

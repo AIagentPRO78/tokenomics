@@ -1,0 +1,63 @@
+{
+  "version": "2026-06-15",
+  "note": "Prices are USD per 1,000,000 tokens (per MTok), Anthropic first-party list pricing. Cache and add-on rates are universal multiples of the base input rate, so each model needs only {input, output}. Source: platform.claude.com/docs/en/about-claude/pricing.md (fetched 2026-06-15).",
+  "multipliers": {
+    "cacheRead": 0.1,
+    "cacheWrite5m": 1.25,
+    "cacheWrite1h": 2.0
+  },
+  "modifiers": {
+    "batch": 0.5,
+    "usGeo": 1.1
+  },
+  "addons": {
+    "webSearchPerRequest": 0.01,
+    "webFetchPerRequest": 0.0
+  },
+  "models": {
+    "claude-opus-4-8": { "input": 5, "output": 25 },
+    "claude-opus-4-7": { "input": 5, "output": 25 },
+    "claude-opus-4-6": { "input": 5, "output": 25 },
+    "claude-opus-4-5": { "input": 5, "output": 25 },
+    "claude-opus-4-1": { "input": 15, "output": 75 },
+    "claude-opus-4-0": { "input": 15, "output": 75 },
+    "claude-opus-4": { "input": 15, "output": 75 },
+    "claude-sonnet-4-6": { "input": 3, "output": 15 },
+    "claude-sonnet-4-5": { "input": 3, "output": 15 },
+    "claude-haiku-4-5": { "input": 1, "output": 5 },
+    "claude-fable-5": { "input": 10, "output": 50 },
+    "claude-mythos-5": { "input": 10, "output": 50 },
+    "claude-3-7-sonnet": { "input": 3, "output": 15 },
+    "claude-3-5-sonnet": { "input": 3, "output": 15 },
+    "claude-3-5-haiku": { "input": 0.8, "output": 4 },
+    "claude-3-opus": { "input": 15, "output": 75 },
+    "claude-3-sonnet": { "input": 3, "output": 15 },
+    "claude-3-haiku": { "input": 0.25, "output": 1.25 }
+  },
+  "families": [
+    { "pattern": "^claude-opus-4-[5-9]", "input": 5, "output": 25, "note": "Opus 4.5-4.9 class" },
+    { "pattern": "^claude-opus-4(-[0-4])?$", "input": 15, "output": 75, "note": "Opus 4 / 4.0-4.4 class" },
+    { "pattern": "^claude-opus-[5-9]", "input": 5, "output": 25, "note": "Opus 5+ assumed Opus-4.8 class until confirmed" },
+    { "pattern": "^claude-sonnet-[4-9]", "input": 3, "output": 15, "note": "Sonnet 4+ class" },
+    { "pattern": "^claude-haiku-[4-9]", "input": 1, "output": 5, "note": "Haiku 4+ class" },
+    { "pattern": "^claude-fable-[5-9]", "input": 10, "output": 50, "note": "Fable 5+ class" },
+    { "pattern": "^claude-mythos-[5-9]", "input": 10, "output": 50, "note": "Mythos 5+ class" },
+    { "pattern": "^claude-3-7-sonnet", "input": 3, "output": 15 },
+    { "pattern": "^claude-3-5-sonnet", "input": 3, "output": 15 },
+    { "pattern": "^claude-3-5-haiku", "input": 0.8, "output": 4 },
+    { "pattern": "^claude-3-opus", "input": 15, "output": 75 },
+    { "pattern": "^claude-3-sonnet", "input": 3, "output": 15 },
+    { "pattern": "^claude-3-haiku", "input": 0.25, "output": 1.25 }
+  ],
+  "default": {
+    "input": 5,
+    "output": 25,
+    "note": "Unknown model id — conservative Opus-4.8-class estimate. Flagged so the UI can warn. Update models.json or add a family pattern to price it exactly."
+  },
+  "fast": {
+    "_note": "Fast-mode is a separate price schedule with no usage flag in the transcript; applied only when the caller opts in (--fast-mode). Per-MTok input/output.",
+    "claude-opus-4-8": { "input": 10, "output": 50 },
+    "claude-opus-4-7": { "input": 30, "output": 150 },
+    "claude-opus-4-6": { "input": 30, "output": 150 }
+  }
+}
