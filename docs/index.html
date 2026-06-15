@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tokenomics — token economics for Claude Code</title>
+  <meta name="description" content="See, attribute, and prove the cost and context of every Claude Code session. Exact offline cost from the transcript, per-subagent attribution, a context-degradation read, and evals that prove each saving. Zero dependencies." />
+  <meta name="theme-color" content="#231c12" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="canonical" href="https://aiagentpro78.github.io/tokenomics/" />
+
+  <!-- open graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="tokenomics — token economics for Claude Code" />
+  <meta property="og:description" content="See, attribute, and prove the cost and context of every Claude Code session — offline, from the transcript." />
+  <meta property="og:url" content="https://aiagentpro78.github.io/tokenomics/" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23231c12'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' font-weight='700' text-anchor='middle' fill='%23e6b65c'%3E%24%3C/text%3E%3C/svg%3E" />
+
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,WONK@9..144,400..600,0..1&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="#top">token<b>omics</b></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#install" class="hide-sm">Install</a>
+      <a href="#commands" class="hide-sm">Commands</a>
+      <a href="#how" class="hide-sm">How it works</a>
+      <a class="ghub" href="https://github.com/AIagentPRO78/tokenomics" rel="noopener">GitHub →</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <span id="top"></span>
+
+    <!-- HERO ------------------------------------------------------------- -->
+    <section class="hero" aria-labelledby="hero-h">
+      <div class="wrap split h2-21">
+        <div>
+          <p class="hero-kicker reveal in">Claude Code plugin · MIT · zero dependencies</p>
+          <h1 id="hero-h" class="reveal in" data-d="1">token<span class="cur">omics</span></h1>
+          <p class="hero-tag reveal in" data-d="2">The token economy of every session — made visible, attributable, and provable.</p>
+          <p class="hero-sub reveal in" data-d="3">A session spends two scarce resources at once: the context window and dollars. tokenomics reads your transcript <strong>offline</strong> and turns both into exact numbers, attribution, and advice you can prove with an eval.</p>
+          <div class="hero-cta reveal in" data-d="3">
+            <button class="cmd" data-copy="/plugin marketplace add AIagentPRO78/tokenomics">
+              <span class="prompt">▸</span><span>/plugin marketplace add AIagentPRO78/tokenomics</span><span class="copy">copy</span>
+            </button>
+            <a class="btn ghost" href="https://github.com/AIagentPRO78/tokenomics" rel="noopener">View source</a>
+          </div>
+          <div class="stats reveal in" data-d="3">
+            <div class="stat"><div class="n tnum">112</div><div class="l">tests passing</div></div>
+            <div class="stat"><div class="n tnum">~97%</div><div class="l">line coverage</div></div>
+            <div class="stat"><div class="n tnum">0</div><div class="l">runtime deps</div></div>
+            <div class="stat"><div class="n tnum">100%</div><div class="l">offline</div></div>
+          </div>
+        </div>
+
+        <div class="terminal reveal in" data-d="2" role="img" aria-label="Sample tokenomics session report showing cost by model, a context gauge, and recommendations.">
+          <div class="terminal-bar" aria-hidden="true">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="terminal-title">/tokenomics — session report</span>
+          </div>
+<pre aria-hidden="true"><span class="t-head">tokenomics — session report</span>
+<span class="t-faint">session ab54f620… · main</span>
+
+<span class="t-head">$0.9030</span><span class="t-faint">  across 42 turns · 18.4K out · cache hit 71%</span>
+
+context  <span class="t-amber">████████████████░░░░░░░░</span> <span class="t-amber">67% getting tight</span>
+
+<span class="t-head">cost by model</span>
+model            cost     share  turns  src
+<span class="t-rule">───────────────  ───────  ─────  ─────  ─────</span>
+claude-opus-4-8  <span class="t-gold">$0.7421</span>  82%    31     exact
+claude-haiku-4-5 <span class="t-gold">$0.1609</span>  18%    11     exact
+
+<span class="t-head">main vs subagents</span>
+channel    cost      share  turns
+<span class="t-rule">─────────  ────────  ─────  ─────</span>
+main loop  <span class="t-gold">$0.5102</span>   56%    24
+subagents  <span class="t-gold">$0.3928</span>   44%    18
+
+<span class="t-head">recommendations</span>
+<span class="t-red">[high]</span> Route mechanical subagents off opus-4-8  <span class="t-green">~save $0.31</span>
+      Subagent turns ran on an Opus-class model;
+      that fan-out is Haiku-shaped. Pin them with
+      <span class="t-teal">model: haiku</span> frontmatter.
+      <span class="t-faint">prove it: tokenomics eval --before a --after b</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01 PROBLEM ------------------------------------------------------- -->
+    <section aria-labelledby="p-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>01</b> The problem <span class="bar"></span></p>
+        <div class="split h2-12">
+          <h2 id="p-h" class="reveal">Two budgets, both invisible until they break.</h2>
+          <div class="reveal" data-d="1">
+            <p>A Claude Code session burns <strong>context-window tokens</strong> — which quietly degrade quality as the window fills (attention budget, context rot) — and <strong>dollars</strong>, the same tokens priced. Both stay hidden in-session until the model gets vague near the cliff, or the monthly bill surprises you.</p>
+            <p style="margin-top:1.1rem">Every other usage tool is a <strong>passive display</strong>: it shows the number and stops. tokenomics attributes the spend to the model, subagent, tool, and skill that caused it — then closes the loop with advice you can <strong>measure</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 INSTALL ------------------------------------------------------- -->
+    <section id="install" aria-labelledby="i-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>02</b> Install <span class="bar"></span></p>
+        <h2 id="i-h" class="reveal">One command. Zero config.</h2>
+        <div class="split h2-21" style="margin-top:2rem">
+          <div class="reveal" data-d="1">
+            <button class="cmd" style="width:100%;justify-content:space-between" data-copy="/plugin marketplace add AIagentPRO78/tokenomics
+/plugin install tokenomics@tokenomics">
+              <span><span class="prompt">▸</span> /plugin marketplace add AIagentPRO78/tokenomics<br><span class="prompt">▸</span> /plugin install tokenomics@tokenomics</span>
+              <span class="copy">copy</span>
+            </button>
+            <p style="margin-top:1.2rem">Then run <code class="mono" style="color:var(--gold)">/tokenomics</code> in any session. That is the whole zero-config path — it reads the current session's transcript and prints the report.</p>
+          </div>
+          <div class="reveal" data-d="2">
+            <h3>Optional: the live HUD</h3>
+            <p style="margin-top:0.7rem">Add one line to <span class="mono" style="color:var(--cream)">settings.json</span> for a context + cost gauge in your prompt:</p>
+            <button class="cmd" style="margin-top:1rem;width:100%;justify-content:space-between" data-copy='"statusLine": { "type": "command", "command": "node /path/to/tokenomics/bin/statusline.mjs" }'>
+              <span style="white-space:normal;text-align:left">"statusLine": { "command": "node …/bin/statusline.mjs" }</span>
+              <span class="copy">copy</span>
+            </button>
+            <p class="mono" style="margin-top:1rem;font-size:0.8rem;color:var(--faint)">███████░░░ 73% · $0.4200 · Opus 4.8 ◔ tight</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 COMMANDS ------------------------------------------------------ -->
+    <section id="commands" aria-labelledby="c-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>03</b> Commands <span class="bar"></span></p>
+        <h2 id="c-h" class="reveal">Six verbs over one transcript.</h2>
+        <div class="cmds reveal" data-d="1">
+          <div class="cmd-row"><code>report</code><p>Cost, a context gauge, attribution by model and channel, top context consumers, and the top recommendations. The default.</p></div>
+          <div class="cmd-row"><code>attribute</code><p>The breakdown only — cost and context by model, subagent, tool, and skill.</p></div>
+          <div class="cmd-row"><code>advise</code><p>Ranked recommendations, each carrying a <span class="mono" style="color:var(--gold)">prove&nbsp;it</span> eval command.</p></div>
+          <div class="cmd-row"><code>route</code><p>Routing advice; <code style="color:var(--cream)">route --scaffold &lt;name&gt; --model haiku</code> writes a cost-routed subagent preset.</p></div>
+          <div class="cmd-row"><code>eval</code><p>Prove a delta — <code style="color:var(--cream)">--before a.jsonl --after b.jsonl</code> returns the token/$ saved and a verdict.</p></div>
+          <div class="cmd-row"><code>models</code><p><code style="color:var(--cream)">--check &lt;id&gt;</code> shows how a model is priced: exact, by family pattern, or conservative default.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 HOW IT WORKS -------------------------------------------------- -->
+    <section id="how" aria-labelledby="h-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>04</b> How it works <span class="bar"></span></p>
+        <div class="split h2-12">
+          <h2 id="h-h" class="reveal">Exact, offline, from the transcript.</h2>
+          <div class="reveal" data-d="1">
+            <p>Claude Code writes a per-session transcript with an exact <span class="mono" style="color:var(--cream)">usage</span> object on every turn. tokenomics streams that file and computes cost with correct cache-tier math — cache read <span class="tnum" style="color:var(--gold)">0.1×</span>, 5-minute write <span class="tnum" style="color:var(--gold)">1.25×</span>, 1-hour write <span class="tnum" style="color:var(--gold)">2×</span> — plus web-search add-ons and batch / data-residency modifiers. Output already includes thinking, so it is never double-counted.</p>
+            <p style="margin-top:1.1rem">Attribution uses <span class="mono" style="color:var(--cream)">isSidechain</span> to separate subagents from the main loop, and joins tool calls to their results. No network calls, no telemetry, nothing stored about you.</p>
+          </div>
+        </div>
+        <div class="chips reveal" data-d="2" aria-label="Context degradation tiers">
+          <span class="chip ok"><span class="d"></span> healthy</span>
+          <span class="chip watch"><span class="d"></span> filling</span>
+          <span class="chip tight"><span class="d"></span> getting tight</span>
+          <span class="chip crit"><span class="d"></span> near the cliff</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 HONESTY ------------------------------------------------------- -->
+    <section aria-labelledby="n-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>05</b> What it won't do <span class="bar"></span></p>
+        <h2 id="n-h" class="reveal">Honesty over a flashy claim.</h2>
+        <div class="cards">
+          <div class="card no reveal" data-d="1"><div class="ix">NO ✕</div><h3>Silent model switching</h3><p>Claude Code doesn't let a plugin reroute the live model. Routing is delivered as advice plus static subagent presets you opt into — never a surprise swap.</p></div>
+          <div class="card no reveal" data-d="2"><div class="ix">NO ✕</div><h3>Forced compaction</h3><p>A plugin can't trigger compaction, only observe it. tokenomics warns and suggests <span class="mono">/compact</span> — it never compacts behind your back.</p></div>
+          <div class="card no reveal" data-d="3"><div class="ix">NO ✕</div><h3>Network calls</h3><p>Everything is computed locally from the transcript. No telemetry, no account linkage, no third-party runtime dependencies to trust.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 PRICING ------------------------------------------------------- -->
+    <section aria-labelledby="pr-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>06</b> Future-proof pricing <span class="bar"></span></p>
+        <div class="split h2-12">
+          <h2 id="pr-h" class="reveal">New models price themselves.</h2>
+          <div class="reveal" data-d="1">
+            <p>Pricing lives as <strong>data</strong> with family-prefix patterns, so a returning or brand-new model is priced with zero code change. A genuinely unknown id is flagged, never guessed silently.</p>
+            <div class="ledger" aria-label="Examples of how model ids resolve">
+              <div class="ledger-row"><span class="k">claude-fable-5</span><span class="v">$10 / $50 <span class="src">· exact</span></span></div>
+              <div class="ledger-row"><span class="k">claude-opus-5-0</span><span class="v">$5 / $25 <span class="src">· family</span></span></div>
+              <div class="ledger-row"><span class="k">claude-unheardof-9</span><span class="v">$5 / $25 <span class="src">· default · flagged</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 SECURITY ------------------------------------------------------ -->
+    <section aria-labelledby="s-h">
+      <div class="wrap">
+        <p class="eyebrow reveal"><b>07</b> Security posture <span class="bar"></span></p>
+        <h2 id="s-h" class="reveal">A surface this small is the point.</h2>
+        <div class="cards">
+          <div class="card reveal" data-d="1"><div class="ix">01</div><h3>Zero dependencies</h3><p>Pure Node standard library. No supply chain to audit, nothing to compromise.</p></div>
+          <div class="card reveal" data-d="2"><div class="ix">02</div><h3>Read-only &amp; offline</h3><p>Reads transcripts, writes only its own report and state. No <span class="mono">eval</span>, no <span class="mono">child_process</span>, no network.</p></div>
+          <div class="card reveal" data-d="3"><div class="ix">03</div><h3>Hardened</h3><p>Adversarially audited: path-traversal-safe hooks, sanitized inputs, a parse guard against hostile transcripts.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-grid">
+      <div>
+        <div class="big">token<span class="cur">omics</span></div>
+        <p class="mono" style="margin-top:0.8rem;font-size:0.82rem;color:var(--faint)">See it. Attribute it. Prove it.</p>
+      </div>
+      <div class="foot-meta">
+        <a href="https://github.com/AIagentPRO78/tokenomics" rel="noopener">github.com/AIagentPRO78/tokenomics</a><br />
+        MIT License · © 2026 AIagentPRO78<br />
+        <span style="color:var(--faint)">Built for Claude Code</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>

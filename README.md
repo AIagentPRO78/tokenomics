@@ -2,6 +2,8 @@
 
 **See, attribute, and _prove_ the cost and context of every Claude Code session.**
 
+📄 **Documentation & homepage:** [aiagentpro78.github.io/tokenomics](https://aiagentpro78.github.io/tokenomics/)
+
 A Claude Code session spends two scarce resources at once — the **context window** (which degrades quality as it fills) and **dollars** (the same tokens, priced). Both are invisible in-session until something goes wrong. `tokenomics` makes them visible, attributes them to the model / subagent / tool / skill that spent them, and gives you concrete advice you can **prove** with a before/after eval.
 
 It reads your session transcript **offline**. No network calls, no telemetry, no account linkage, zero runtime dependencies.
