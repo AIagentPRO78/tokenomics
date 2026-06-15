@@ -128,6 +128,12 @@ npm test            # 94 tests
 npm run test:coverage
 ```
 
+## Privacy
+
+tokenomics collects nothing, sends nothing, and stores nothing about you — it runs
+entirely on your machine and makes no network calls. Full details, with a one‑line
+command to verify it yourself, are in [PRIVACY.md](PRIVACY.md).
+
 ## License
 
 MIT © AIagentPRO78
