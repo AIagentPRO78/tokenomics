@@ -13,7 +13,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = join(HERE, 'fixtures', 'session.jsonl');
 
 test('encodeCwd matches Claude Code project-dir encoding', () => {
-  assert.equal(encodeCwd('/Users/ellerywee/agentmeet'), '-Users-ellerywee-agentmeet');
+  assert.equal(encodeCwd('/Users/example/agentmeet'), '-Users-example-agentmeet');
   assert.equal(encodeCwd('/a/b.c/d'), '-a-b-c-d');
 });
 
