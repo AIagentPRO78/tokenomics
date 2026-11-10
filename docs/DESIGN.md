@@ -102,7 +102,7 @@ transcript.jsonl ──parse──> [turn records] ──┬─ pricing ──> 
 4. **`tokenomics route`** → reads the ledger, recommends subagent model tiers, can scaffold a pre-routed subagent (static frontmatter).
 5. **`tokenomics eval`** → before/after token-delta proof of a recommendation (the hiring-signal feature).
 6. **statusLine HUD** (opt-in, one line) → live context gauge + $ with colour thresholds.
-7. **Hooks** — a single PreCompact hook that silently snapshots compaction stats (pre/post tokens) to a per-session state file. Advisory only: it injects no context, never blocks compaction, and never mutates the session. (Kept deliberately minimal — a cost/context plugin must not itself bloat the window.)
+7. **Hooks** — a single PreCompact hook that silently appends a compaction marker (session id, trigger, transcript path, timestamp — no token stats) to a per-session state file. Advisory only: it injects no context, never blocks compaction, and never mutates the session. (Kept deliberately minimal — a cost/context plugin must not itself bloat the window.)
 
 ## 6. Non-goals (YAGNI)
 

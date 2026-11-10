@@ -5,6 +5,7 @@
 
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { findTranscript, parseTranscriptFile } from '../src/transcript.mjs';
 import { buildLedger } from '../src/attribute.mjs';
@@ -18,12 +19,40 @@ import {
   renderEval,
   colorEnabled,
   money,
+  sanitizeText,
+  sanitizeData,
+  MAX_NAME_CHARS,
 } from '../src/format.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8'));
 
-const BOOLEAN_FLAGS = new Set(['json', 'no-color', 'fast-mode', 'help', 'version', 'h', 'v']);
+// The complete set of options the CLI accepts. Anything else is rejected instead of
+// being silently ignored: the /tokenomics slash command builds this command line
+// from text typed into a chat, so the script — not the prompt — is what decides
+// which arguments are valid.
+const BOOLEAN_FLAGS = new Set(['json', 'no-color', 'fast-mode', 'force', 'help', 'version', 'h', 'v']);
+const VALUE_FLAGS = new Set([
+  'transcript',
+  'cwd',
+  'session',
+  'before',
+  'after',
+  'label',
+  'check',
+  'scaffold',
+  'model',
+]);
+const SHORT_FLAGS = new Set(['h', 'v']);
+// Options whose value is a filesystem path. A leading "~" is expanded here rather
+// than by a shell: /tokenomics passes every value single-quoted, so a shell never
+// expands it, and transcripts live under ~/.claude/projects.
+const PATH_FLAGS = ['transcript', 'cwd', 'before', 'after'];
+
+/** "~" or "~/x" -> the home directory, the way an unquoted shell word would be. */
+function expandHome(p) {
+  return p === '~' || p.startsWith('~/') ? homedir() + p.slice(1) : p;
+}
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -32,19 +61,28 @@ function parseArgs(argv) {
     if (a.startsWith('--')) {
       const body = a.slice(2);
       const eq = body.indexOf('=');
-      if (eq >= 0) {
-        args[body.slice(0, eq)] = body.slice(eq + 1);
-      } else if (BOOLEAN_FLAGS.has(body)) {
-        args[body] = true;
-      } else {
-        const next = argv[i + 1];
-        if (next === undefined || next.startsWith('--')) args[body] = true;
-        else {
-          args[body] = next;
+      const name = eq >= 0 ? body.slice(0, eq) : body;
+      if (BOOLEAN_FLAGS.has(name)) {
+        if (eq >= 0) throw new Error(`option --${name} takes no value`);
+        args[name] = true;
+      } else if (VALUE_FLAGS.has(name)) {
+        if (eq >= 0) {
+          args[name] = body.slice(eq + 1);
+        } else {
+          const next = argv[i + 1];
+          if (next === undefined || next.startsWith('--')) {
+            throw new Error(`option --${name} needs a value`);
+          }
+          args[name] = next;
           i++;
         }
+      } else {
+        throw new Error(`unknown option "${sanitizeText(a, MAX_NAME_CHARS)}" (see --help)`);
       }
     } else if (a.startsWith('-') && a.length === 2) {
+      if (!SHORT_FLAGS.has(a[1])) {
+        throw new Error(`unknown option "${sanitizeText(a, MAX_NAME_CHARS)}" (see --help)`);
+      }
       args[a.slice(1)] = true;
     } else {
       args._.push(a);
@@ -107,21 +145,21 @@ common options:
 async function cmdReport(args) {
   const { ledger } = await loadLedger(args);
   const recs = recommend(ledger, null);
-  if (args.json) return print(JSON.stringify({ ledger, recs }, null, 2));
+  if (args.json) return printJson({ ledger, recs });
   print(renderReport({ ledger, signal: null, recs }, colorOn(args)));
 }
 
 async function cmdAttribute(args) {
   const { ledger } = await loadLedger(args);
-  if (args.json) return print(JSON.stringify(ledger, null, 2));
+  if (args.json) return printJson(ledger);
   // attribute view = report without the recommendations section (recs null = omit)
   print(renderReport({ ledger, signal: null, recs: null }, colorOn(args)));
 }
 
 async function cmdAdvise(args) {
   const { ledger } = await loadLedger(args);
-  const recs = recommend(ledger, null);
-  if (args.json) return print(JSON.stringify(recs, null, 2));
+  const recs = sanitizeData(recommend(ledger, null));
+  if (args.json) return printJson(recs);
   const on = colorOn(args);
   if (!recs.length) return print('no recommendations — this session is lean.');
   for (const r of recs) {
@@ -135,8 +173,8 @@ async function cmdRoute(args) {
   // Scaffolding a preset does not need a transcript — handle it before resolving one.
   if (args.scaffold) return scaffoldSubagent(args);
   const { ledger } = await loadLedger(args);
-  const recs = recommend(ledger, null).filter((r) => r.kind === 'route-subtask');
-  if (args.json) return print(JSON.stringify(recs, null, 2));
+  const recs = sanitizeData(recommend(ledger, null).filter((r) => r.kind === 'route-subtask'));
+  if (args.json) return printJson(recs);
   if (!recs.length) return print('no routing change recommended — subagent spend is already lean.');
   for (const r of recs) {
     print(`${r.title}\n   ${r.detail}`);
@@ -151,7 +189,7 @@ function scaffoldSubagent(args) {
   const dir = resolve(args.cwd || process.cwd(), '.claude', 'agents');
   const file = join(dir, `${name}.md`);
   if (existsSync(file) && !args.force) {
-    process.stderr.write(`tokenomics: ${file} exists (use --force)\n`);
+    process.stderr.write(`tokenomics: ${sanitizeText(file)} exists (use --force)\n`);
     process.exit(1);
   }
   const body = `---
@@ -165,7 +203,7 @@ Keep output minimal — your caller pays for every token you emit.
 `;
   mkdirSync(dir, { recursive: true });
   writeFileSync(file, body);
-  print(`wrote ${file} (model: ${model})`);
+  print(`wrote ${sanitizeText(file)} (model: ${model})`);
 }
 
 async function cmdEval(args) {
@@ -182,7 +220,7 @@ async function cmdEval(args) {
   const before = buildLedger(await parseTranscriptFile(resolve(args.before)), opts);
   const after = buildLedger(await parseTranscriptFile(resolve(args.after)), opts);
   const result = diffLedgers(before, after, args.label || 'before vs after');
-  if (args.json) return print(JSON.stringify(result, null, 2));
+  if (args.json) return printJson(result);
   print(renderEval(result, colorOn(args)));
 }
 
@@ -208,10 +246,10 @@ function cmdModels(args) {
     process.stderr.write('tokenomics models: --check <model-id>\n');
     process.exit(1);
   }
-  const r = priceFor(id);
-  if (args.json) return print(JSON.stringify(r, null, 2));
+  const r = sanitizeData(priceFor(id));
+  if (args.json) return printJson(r);
   print(
-    `${id}\n  normalized: ${r.normalizedId}\n  rates: in $${r.input}/MTok · out $${r.output}/MTok\n  source: ${r.source}${r.unknown ? ' (UNKNOWN — estimate)' : ''}${r.note ? `\n  note: ${r.note}` : ''}`
+    `${sanitizeText(id, MAX_NAME_CHARS)}\n  normalized: ${r.normalizedId}\n  rates: in $${r.input}/MTok · out $${r.output}/MTok\n  source: ${r.source}${r.unknown ? ' (UNKNOWN — estimate)' : ''}${r.note ? `\n  note: ${r.note}` : ''}`
   );
 }
 
@@ -219,12 +257,25 @@ function print(s) {
   process.stdout.write(s + '\n');
 }
 
+/** --json output: same data, with every string cleaned the way the text views are. */
+function printJson(value) {
+  print(JSON.stringify(sanitizeData(value), null, 2));
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  for (const name of PATH_FLAGS) {
+    if (typeof args[name] === 'string') args[name] = expandHome(args[name]);
+  }
   if (args.version || args.v) return print(PKG.version);
   if (args.help || args.h) return print(HELP);
 
   const cmd = args._[0] || 'report';
+  // one command word; `models` may also take the model id positionally
+  const extra = args._[cmd === 'models' ? 2 : 1];
+  if (extra !== undefined) {
+    throw new Error(`unexpected argument "${sanitizeText(extra, MAX_NAME_CHARS)}" (see --help)`);
+  }
   switch (cmd) {
     case 'report':
       return cmdReport(args);
@@ -243,12 +294,14 @@ async function main() {
     case 'help':
       return print(HELP);
     default:
-      process.stderr.write(`tokenomics: unknown command "${cmd}"\n\n${HELP}`);
+      process.stderr.write(
+        `tokenomics: unknown command "${sanitizeText(cmd, MAX_NAME_CHARS)}"\n\n${HELP}`
+      );
       process.exit(1);
   }
 }
 
 main().catch((err) => {
-  process.stderr.write(`tokenomics: ${err && err.message ? err.message : err}\n`);
+  process.stderr.write(`tokenomics: ${sanitizeText(err && err.message ? err.message : err)}\n`);
   process.exit(1);
 });

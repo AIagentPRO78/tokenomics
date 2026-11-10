@@ -1,14 +1,19 @@
 # Privacy Policy
 
 **Project:** tokenomics — a Claude Code plugin
-**Last updated:** 2026-06-15
+**Last updated:** 2026-11-11
 
 ## TL;DR
 
-**tokenomics collects nothing, sends nothing, and stores nothing about you.**
-It runs entirely on your own machine, reads your local Claude Code session
-transcript, and makes **no network requests**. There is no telemetry, no
-analytics, no account, no tracking, and no third‑party runtime dependencies.
+**tokenomics collects nothing and sends nothing.** It runs entirely on your own
+machine, reads your local Claude Code session transcript, and makes **no network
+requests**. There is no telemetry, no analytics, no account, no tracking, and no
+third‑party runtime dependencies.
+
+The one thing it stores by itself is a small **local** marker file, written each
+time a session is compacted. It records the session id, what triggered the
+compaction, and the path of that session's transcript on your disk. It never
+leaves your machine. Section 1.2 lists every field.
 
 This document is intentionally specific so you can verify every claim against the
 public source code.
@@ -32,6 +37,10 @@ From each turn it uses a small set of **metadata** fields:
 - timestamps, git branch, and session id,
 - the **byte size** of a tool result (used to attribute context consumption).
 
+It also reads two small JSON inputs that Claude Code passes to it on stdin: the
+statusLine payload (only if you enable the optional HUD) and the PreCompact hook
+input described in 1.2.
+
 It does **not** parse, retain, or transmit the **substance** of your prompts,
 your code, your files, or your tool outputs. It measures how large a tool result
 was; it does not keep what was in it.
@@ -39,9 +48,32 @@ was; it does not keep what was in it.
 ### 1.2 What it writes
 
 - The report to your **terminal** (stdout).
-- An optional, tiny per‑session marker file at
+- A per‑session **compaction marker file** at
   `~/.claude/tokenomics/state/<session>.compactions.jsonl`, written by the
-  PreCompact hook. It contains **token counts only** — no message content.
+  PreCompact hook (`hooks/precompact-snapshot.mjs`). The hook is registered in
+  `hooks/hooks.json`, so it runs whenever the plugin is enabled and Claude Code is
+  about to compact a session, manually or automatically; the plugin has no setting
+  that turns it off. Each run appends one JSON line with exactly these four fields:
+  - `sessionId` — the session id from the hook input, with every character other
+    than a letter, digit, `_` or `-` replaced by `_`, cut to 128 characters
+    (`unknown` if there was none). The same value is the `<session>` part of the
+    file name.
+  - `trigger` — the hook input's `trigger` (or `matcher`) value, for example
+    `manual` or `auto`; `null` if absent.
+  - `transcriptPath` — the hook input's `transcript_path`: the **full local path**
+    of the session's transcript file; `null` if absent. That path normally
+    includes your home directory (and so your OS user name) and a folder named
+    after the project directory you were working in.
+  - `at` — the hook input's `timestamp` value if it has one, otherwise `null`.
+
+  The file holds **no token counts, no prompts, no code and no tool output**.
+  Nothing in the plugin reads these files today, and the plugin never deletes or
+  rotates them, so they stay until you remove them; deleting
+  `~/.claude/tokenomics/` at any time is safe. The hook creates the `tokenomics/`
+  and `state/` directories readable by your user only (mode `0700`) and each
+  marker file as `0600`. A directory or file that an earlier version of the hook
+  already created keeps the permissions it was created with (your system
+  default, typically `0755` / `0644`).
 - When you explicitly run `tokenomics route --scaffold`, a subagent preset file
   **you requested**, under your project's `.claude/agents/`.
 
@@ -51,7 +83,9 @@ was; it does not keep what was in it.
   error reporting, no "phone home," no update checks.
 - **No third‑party services, SDKs, or runtime dependencies.** It uses only the
   Node.js standard library.
-- **No cookies, no account, no login, no device or user identifiers.**
+- **No cookies, no account, no login.** It creates no device or user identifiers
+  of its own; the marker file in 1.2 records Claude Code's session id and a
+  transcript path, locally only.
 - **No collection or transmission** of prompts, source code, file contents,
   credentials, secrets, or personal data.
 - **No selling or sharing of data** — because none is collected, there is nothing

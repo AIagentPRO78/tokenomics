@@ -4,7 +4,8 @@
 // Deliberately silent on the happy path: it writes a small compaction marker to a
 // per-session state file and exits 0. It injects NOTHING into context and never
 // blocks compaction — a cost/context plugin must not itself bloat the window or
-// surprise the user. The session report later reads these markers.
+// surprise the user. Nothing reads these markers yet; PRIVACY.md lists exactly what
+// one contains, so keep the two in step.
 //
 // Failure handling is split on purpose: a malformed-stdin parse error is an
 // expected, swallowed condition; a disk-write error is a real failure surfaced to
@@ -55,8 +56,9 @@ try {
     transcriptPath: ev.transcript_path || null,
     at: ev.timestamp || null,
   };
-  mkdirSync(dir, { recursive: true });
-  appendFileSync(file, JSON.stringify(marker) + '\n');
+  // owner-only: the marker names a session and the path of its transcript
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  appendFileSync(file, JSON.stringify(marker) + '\n', { mode: 0o600 });
 } catch (err) {
   // observable in dev, but never fail the session over bookkeeping
   if (process.env.TOKENOMICS_DEBUG) {
