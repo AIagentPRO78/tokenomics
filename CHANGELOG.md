@@ -3,6 +3,25 @@
 All notable changes to **tokenomics** are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Security
+- Report, `advise`, `route`, `eval`, `models`, statusLine and `--json` output: strings taken
+  from a transcript (session id, branch, model ids, tool names) are stripped of terminal
+  escape sequences and control characters, kept to one line, and length-capped.
+- The tool-bloat recommendation's `prove it:` line no longer embeds the tool name; it is now
+  the fixed `tokenomics eval --before <a>.jsonl --after <b>.jsonl` (the old
+  `attribute --tool …` form used options the CLI never implemented).
+- The CLI rejects unknown options, options missing their value, and stray arguments instead
+  of ignoring them.
+- `/tokenomics` pre-approves only the bundled CLI invocation instead of all of Bash, and no
+  longer pastes raw arguments into the command line.
+- PreCompact marker directory and files are created owner-only (`0700` / `0600`).
+
+### Fixed
+- PRIVACY.md, README and DESIGN.md now describe the PreCompact marker file as it is actually
+  written (session id, trigger, transcript path, timestamp — not token counts).
+
 ## [0.1.0] — 2026-06-15
 
 Initial release.

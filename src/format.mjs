@@ -17,6 +17,44 @@ const ANSI = {
   gray: `${ESC}[90m`,
 };
 
+// Untrusted text. Session ids, branch names, model ids and tool names are copied
+// out of the transcript, which may be a file somebody else wrote. Before any of it
+// reaches a terminal (or a model reading the output) it is reduced HERE, in the
+// rendering layer, to one bounded line of printable text.
+export const MAX_NAME_CHARS = 128; // ids in headers and table cells (fits a long MCP tool name)
+export const MAX_TEXT_CHARS = 1024; // any other string (advice sentences, paths)
+const MAX_DEPTH = 12; // the deepest real ledger path is 6 levels
+
+// CSI (ESC [ ... final byte, or the C1 form), then OSC/DCS/SOS/PM/APC strings up
+// to BEL or ST, then any other ESC-introduced sequence.
+const ESCAPE_SEQUENCES =
+  /(?:\x1b\[|\x9b)[0-?]*[ -/]*[@-~]|(?:\x1b[\]PX^_]|[\x90\x98\x9d-\x9f])[^\x07\x1b\x9c]*(?:\x07|\x1b\\|\x9c)?|\x1b[ -/]*[0-~]?/g;
+// Line/tab-like controls become one space so words stay separated ...
+const BREAKS = /[\t\n\v\f\r\x85\u2028\u2029]+/g;
+// ... every other C0/C1 control, DEL, and the bidi override/isolate characters go.
+const CONTROLS = /[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/g;
+
+/** Reduce an untrusted value to a single printable line of at most `max` chars. */
+export function sanitizeText(value, max = MAX_TEXT_CHARS) {
+  let s = String(value ?? '');
+  // bound the work first: one field can be as long as a whole transcript line
+  if (s.length > max * 4) s = s.slice(0, max * 4);
+  s = s.replace(ESCAPE_SEQUENCES, '').replace(BREAKS, ' ').replace(CONTROLS, '');
+  if (s.length > max) s = s.slice(0, max - 1).replace(/[\ud800-\udbff]$/, '') + '…';
+  return s;
+}
+
+/** Deep copy of plain data with every string (keys included) through sanitizeText. */
+export function sanitizeData(value, max = MAX_TEXT_CHARS, depth = 0) {
+  if (typeof value === 'string') return sanitizeText(value, max);
+  if (value === null || typeof value !== 'object') return value;
+  if (depth >= MAX_DEPTH) return null; // hostile nesting: drop it rather than recurse
+  if (Array.isArray(value)) return value.map((v) => sanitizeData(v, max, depth + 1));
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [sanitizeText(k, max), sanitizeData(v, max, depth + 1)])
+  );
+}
+
 /** Whether to emit ANSI colour for a given stream. */
 export function colorEnabled(stream = process.stdout) {
   if (process.env.NO_COLOR !== undefined && process.env.NO_COLOR !== '') return false;
@@ -96,7 +134,10 @@ export function renderStatusline(parsed, on = colorEnabled(process.stdout)) {
   const pctTxt = `${signal.usedPercent.toFixed(0)}%`;
   const left = color(`${gauge} ${pctTxt}`, tierColor(tName), on);
   const mid = color(money(costUsd), 'green', on);
-  const modelTxt = model && (model.name || model.id) ? color(model.name || model.id, 'gray', on) : '';
+  const modelTxt =
+    model && (model.name || model.id)
+      ? color(sanitizeText(model.name || model.id, MAX_NAME_CHARS), 'gray', on)
+      : '';
   const warn =
     tName === 'critical'
       ? color(' ⚠ compact', 'red', on)
@@ -108,16 +149,20 @@ export function renderStatusline(parsed, on = colorEnabled(process.stdout)) {
 
 /** Full session report. `data` = {ledger, signal?, recs}. */
 export function renderReport(data, on = colorEnabled(process.stdout)) {
-  const { ledger, signal, recs } = data;
+  // every string below (names, advice text, suggested commands) is cleaned first
+  const { ledger, signal, recs } = sanitizeData(data);
   const t = ledger.totals;
   const out = [];
   const h = (s) => color(s, 'bold', on);
   const dim = (s) => color(s, 'gray', on);
+  const name = (v) => sanitizeText(v, MAX_NAME_CHARS);
 
   out.push(h('tokenomics — session report'));
   if (ledger.meta && ledger.meta.sessionId) {
     out.push(
-      dim(`session ${ledger.meta.sessionId}${ledger.meta.gitBranch ? ` · ${ledger.meta.gitBranch}` : ''}`)
+      dim(
+        `session ${name(ledger.meta.sessionId)}${ledger.meta.gitBranch ? ` · ${name(ledger.meta.gitBranch)}` : ''}`
+      )
     );
   }
   out.push('');
@@ -148,7 +193,7 @@ export function renderReport(data, on = colorEnabled(process.stdout)) {
       table(
         ['model', 'cost', 'share', 'turns', 'src'],
         ledger.byModel.map((m) => [
-          m.unknown ? `${m.key} ${color('(est)', 'yellow', on)}` : m.key,
+          m.unknown ? `${name(m.key)} ${color('(est)', 'yellow', on)}` : name(m.key),
           money(m.cost.total),
           `${m.share.toFixed(0)}%`,
           String(m.turns),
@@ -187,7 +232,7 @@ export function renderReport(data, on = colorEnabled(process.stdout)) {
     out.push(
       table(
         ['tool', 'context', 'calls', 'share'],
-        consumers.map((c) => [c.name, tokensHuman(c.bytes) + 'B', String(c.calls), `${c.sharePercent.toFixed(0)}%`])
+        consumers.map((c) => [name(c.name), tokensHuman(c.bytes) + 'B', String(c.calls), `${c.sharePercent.toFixed(0)}%`])
       )
     );
   }
@@ -217,7 +262,7 @@ export function renderEval(result, on = colorEnabled(process.stdout)) {
   const v = result.verdict;
   const vColor = v === 'improved' ? 'green' : v === 'regressed' ? 'red' : 'gray';
   const out = [];
-  out.push(color(`eval: ${result.label}`, 'bold', on));
+  out.push(color(`eval: ${sanitizeText(result.label)}`, 'bold', on));
   out.push(
     table(
       ['', 'before', 'after', 'delta'],

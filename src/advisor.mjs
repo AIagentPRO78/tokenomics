@@ -85,7 +85,9 @@ export function recommend(ledger, signal = null, opts = {}) {
           `(${share.toFixed(0)}% of all tool output). Narrow it (filter/paginate/limit), or push it ` +
           `behind a subagent that returns a condensed summary so the raw payload never enters the ` +
           `main window.`,
-        evalCmd: `tokenomics attribute --tool ${t.name} --before <a>.jsonl --after <b>.jsonl`,
+        // The tool name comes from the transcript, so it is never placed inside a
+        // command the user (or a model) is invited to run — only fixed text goes here.
+        evalCmd: `tokenomics eval --before <a>.jsonl --after <b>.jsonl`,
       });
       break; // surface the single worst offender, not every tool
     }
