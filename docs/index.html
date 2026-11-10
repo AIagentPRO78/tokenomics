@@ -161,7 +161,7 @@ subagents  <span class="t-gold">$0.3928</span>   44%    18
           <h2 id="h-h" class="reveal">Exact, offline, from the transcript.</h2>
           <div class="reveal" data-d="1">
             <p>Claude Code writes a per-session transcript with an exact <span class="mono" style="color:var(--cream)">usage</span> object on every turn. tokenomics streams that file and computes cost with correct cache-tier math — cache read <span class="tnum" style="color:var(--gold)">0.1×</span>, 5-minute write <span class="tnum" style="color:var(--gold)">1.25×</span>, 1-hour write <span class="tnum" style="color:var(--gold)">2×</span> — plus web-search add-ons and batch / data-residency modifiers. Output already includes thinking, so it is never double-counted.</p>
-            <p style="margin-top:1.1rem">Attribution uses <span class="mono" style="color:var(--cream)">isSidechain</span> to separate subagents from the main loop, and joins tool calls to their results. No network calls, no telemetry, nothing stored about you.</p>
+            <p style="margin-top:1.1rem">Attribution uses <span class="mono" style="color:var(--cream)">isSidechain</span> to separate subagents from the main loop, and joins tool calls to their results. No network calls, no telemetry. The only file it writes on its own is a small local compaction marker (session id, trigger, transcript path) — see the <a href="https://github.com/AIagentPRO78/tokenomics/blob/main/PRIVACY.md" rel="noopener" style="color:var(--cream);text-decoration:underline">privacy policy</a>.</p>
           </div>
         </div>
         <div class="chips reveal" data-d="2" aria-label="Context degradation tiers">

@@ -120,3 +120,44 @@ test('tool-bloat never embeds the (transcript-derived) tool name in the prove-it
     assert.equal(bloat.evalCmd, 'tokenomics eval --before <a>.jsonl --after <b>.jsonl');
   }
 });
+
+test('an over-long tool or model name cannot push the advice out of its sentence', () => {
+  const ledger = makeLedger({
+    byChannel: { sidechain: { cost: { total: 1.0 }, turns: 5 } },
+    byModel: [{ key: 'claude-opus-4-8' + 'x'.repeat(100_000), cost: { total: 2.0 } }],
+    byTool: [{ name: 'T'.repeat(100_000), contextBytes: 60000, calls: 1 }],
+  });
+  const recs = recommend(ledger, null);
+  const bloat = recs.find((r) => r.kind === 'tool-bloat');
+  assert.ok(bloat.title.endsWith(' is flooding the context window'));
+  assert.ok(bloat.title.length <= 128 + 40, `title is ${bloat.title.length} chars`);
+  assert.ok(bloat.detail.includes('Narrow it (filter/paginate/limit)'));
+  assert.ok(bloat.detail.endsWith('main window.'));
+  assert.ok(bloat.detail.length <= 1024, `detail is ${bloat.detail.length} chars`);
+  const route = recs.find((r) => r.kind === 'route-subtask');
+  assert.ok(route, 'route advice still fires for the long opus id');
+  assert.ok(route.title.startsWith('Route mechanical subagents off claude-opus-4-8'));
+  assert.ok(route.title.length <= 128 + 40, `title is ${route.title.length} chars`);
+});
+
+test('tool and model names are embedded in advice as clean one-line labels', () => {
+  const ledger = makeLedger({
+    byTool: [{ name: 'Read' + ' '.repeat(80) + 'fake\ncolumn​\u{e0041}', contextBytes: 60000, calls: 1 }],
+    unknownModels: ['zz\x1b[2J\nmodel'],
+  });
+  const recs = recommend(ledger, null);
+  assert.equal(recs.find((r) => r.kind === 'tool-bloat').title, 'Read fake column is flooding the context window');
+  assert.ok(recs.find((r) => r.kind === 'unknown-model').detail.startsWith('Priced with a conservative default: zz model. Add it'));
+});
+
+test('many unknown model ids are counted, not all listed, so the advice survives', () => {
+  const unknownModels = Array.from({ length: 300 }, (_, i) => `zz-${i}-` + 'm'.repeat(5000));
+  const rec = recommend(makeLedger({ unknownModels }), null).find((r) => r.kind === 'unknown-model');
+  assert.ok(rec.detail.includes('zz-0-') && rec.detail.includes('zz-4-') && !rec.detail.includes('zz-5-'));
+  assert.ok(rec.detail.includes('(+295 more). Add it to models.json'));
+  assert.ok(rec.detail.endsWith('for exact pricing.'));
+  assert.ok(rec.detail.length <= 1024, `detail is ${rec.detail.length} chars`);
+  // a short list reads exactly as before
+  const few = recommend(makeLedger({ unknownModels: ['claude-zztop-9', 'other-1'] }), null).find((r) => r.kind === 'unknown-model');
+  assert.ok(few.detail.startsWith('Priced with a conservative default: claude-zztop-9, other-1. Add it to models.json'));
+});

@@ -31,15 +31,24 @@ const ESCAPE_SEQUENCES =
   /(?:\x1b\[|\x9b)[0-?]*[ -/]*[@-~]|(?:\x1b[\]PX^_]|[\x90\x98\x9d-\x9f])[^\x07\x1b\x9c]*(?:\x07|\x1b\\|\x9c)?|\x1b[ -/]*[0-~]?/g;
 // Line/tab-like controls become one space so words stay separated ...
 const BREAKS = /[\t\n\v\f\r\x85\u2028\u2029]+/g;
-// ... every other C0/C1 control, DEL, and the bidi override/isolate characters go.
-const CONTROLS = /[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/g;
+// ... every other C0/C1 control and DEL goes, and so does text a person cannot see
+// but a model reading the output can: format characters (\p{Cf}: bidi controls and
+// marks, zero-width characters, BOM, soft hyphen, interlinear annotations, tag
+// characters) and the default-ignorable code points (variation selectors, fillers,
+// all of U+E0000..E0FFF). Unpaired surrogates (\p{Cs}) go in the same pass: two
+// halves left side by side once the text between them is removed would otherwise
+// join into one of the characters above.
+const INVISIBLE = /[\x00-\x1f\x7f-\x9f\p{Cf}\p{Default_Ignorable_Code_Point}\p{Cs}]/gu;
+// Last, a run of spaces of any kind (ASCII, no-break, em, ideographic, braille
+// blank) is one space, so padding cannot push text onto a new visual line.
+const SPACES = /[\s\u2800]+/g;
 
 /** Reduce an untrusted value to a single printable line of at most `max` chars. */
 export function sanitizeText(value, max = MAX_TEXT_CHARS) {
   let s = String(value ?? '');
   // bound the work first: one field can be as long as a whole transcript line
   if (s.length > max * 4) s = s.slice(0, max * 4);
-  s = s.replace(ESCAPE_SEQUENCES, '').replace(BREAKS, ' ').replace(CONTROLS, '');
+  s = s.replace(ESCAPE_SEQUENCES, '').replace(BREAKS, ' ').replace(INVISIBLE, '').replace(SPACES, ' ');
   if (s.length > max) s = s.slice(0, max - 1).replace(/[\ud800-\udbff]$/, '') + '…';
   return s;
 }

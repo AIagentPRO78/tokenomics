@@ -5,6 +5,7 @@
 
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { findTranscript, parseTranscriptFile } from '../src/transcript.mjs';
 import { buildLedger } from '../src/attribute.mjs';
@@ -43,6 +44,15 @@ const VALUE_FLAGS = new Set([
   'model',
 ]);
 const SHORT_FLAGS = new Set(['h', 'v']);
+// Options whose value is a filesystem path. A leading "~" is expanded here rather
+// than by a shell: /tokenomics passes every value single-quoted, so a shell never
+// expands it, and transcripts live under ~/.claude/projects.
+const PATH_FLAGS = ['transcript', 'cwd', 'before', 'after'];
+
+/** "~" or "~/x" -> the home directory, the way an unquoted shell word would be. */
+function expandHome(p) {
+  return p === '~' || p.startsWith('~/') ? homedir() + p.slice(1) : p;
+}
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -179,7 +189,7 @@ function scaffoldSubagent(args) {
   const dir = resolve(args.cwd || process.cwd(), '.claude', 'agents');
   const file = join(dir, `${name}.md`);
   if (existsSync(file) && !args.force) {
-    process.stderr.write(`tokenomics: ${file} exists (use --force)\n`);
+    process.stderr.write(`tokenomics: ${sanitizeText(file)} exists (use --force)\n`);
     process.exit(1);
   }
   const body = `---
@@ -193,7 +203,7 @@ Keep output minimal — your caller pays for every token you emit.
 `;
   mkdirSync(dir, { recursive: true });
   writeFileSync(file, body);
-  print(`wrote ${file} (model: ${model})`);
+  print(`wrote ${sanitizeText(file)} (model: ${model})`);
 }
 
 async function cmdEval(args) {
@@ -254,6 +264,9 @@ function printJson(value) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  for (const name of PATH_FLAGS) {
+    if (typeof args[name] === 'string') args[name] = expandHome(args[name]);
+  }
   if (args.version || args.v) return print(PKG.version);
   if (args.help || args.h) return print(HELP);
 

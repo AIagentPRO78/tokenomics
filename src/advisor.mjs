@@ -8,6 +8,13 @@
 
 import { priceFor } from './models.mjs';
 import { num } from './util.mjs';
+import { sanitizeText, MAX_NAME_CHARS } from './format.mjs';
+
+// Model ids and tool names come from the transcript. Each one is cut to a label's
+// length HERE, before it is built into a sentence, so an over-long name cannot
+// push the advice itself out of the bounded line the renderer prints.
+const label = (v) => sanitizeText(v, MAX_NAME_CHARS);
+const MAX_LISTED_MODELS = 5; // unknown ids named in one sentence; the rest are counted
 
 export const THRESHOLDS = {
   toolBloatBytes: 50_000, // a single tool's results past this are worth narrowing
@@ -57,7 +64,7 @@ export function recommend(ledger, signal = null, opts = {}) {
         recs.push({
           kind: 'route-subtask',
           severity: estSaving >= 0.25 ? 'high' : estSaving >= 0.05 ? 'medium' : 'low',
-          title: `Route mechanical subagents off ${opusRow.key}`,
+          title: `Route mechanical subagents off ${label(opusRow.key)}`,
           detail:
             `Subagent (sidechain) turns cost $${side.cost.total.toFixed(4)} and are running on an ` +
             `Opus-class model. Mechanical fan-out work (search, extraction, formatting) is usually ` +
@@ -76,12 +83,13 @@ export function recommend(ledger, signal = null, opts = {}) {
   for (const t of tools) {
     const share = totalBytes ? (t.contextBytes / totalBytes) * 100 : 0;
     if (t.contextBytes >= THRESHOLDS.toolBloatBytes || share >= THRESHOLDS.toolBloatShare) {
+      const toolName = label(t.name);
       recs.push({
         kind: 'tool-bloat',
         severity: share >= 60 ? 'high' : 'medium',
-        title: `${t.name} is flooding the context window`,
+        title: `${toolName} is flooding the context window`,
         detail:
-          `${t.name} put ${humanBytes(t.contextBytes)} into context across ${t.calls} call(s) ` +
+          `${toolName} put ${humanBytes(t.contextBytes)} into context across ${t.calls} call(s) ` +
           `(${share.toFixed(0)}% of all tool output). Narrow it (filter/paginate/limit), or push it ` +
           `behind a subagent that returns a condensed summary so the raw payload never enters the ` +
           `main window.`,
@@ -127,12 +135,15 @@ export function recommend(ledger, signal = null, opts = {}) {
 
   // 5) Unknown model — pricing is an estimate, surface it honestly.
   if (ledger.unknownModels && ledger.unknownModels.length) {
+    const listed = ledger.unknownModels.slice(0, MAX_LISTED_MODELS).map(label);
+    const more = ledger.unknownModels.length - listed.length;
+    const names = listed.join(', ') + (more > 0 ? ` (+${more} more)` : '');
     recs.push({
       kind: 'unknown-model',
       severity: 'info',
       title: 'Unrecognized model id — cost is an estimate',
       detail:
-        `Priced with a conservative default: ${ledger.unknownModels.join(', ')}. Add it to models.json ` +
+        `Priced with a conservative default: ${names}. Add it to models.json ` +
         `(or a family pattern) for exact pricing.`,
     });
   }
